@@ -1,0 +1,32 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./backend
+    environment:
+      CRYPTO_REDIS_URL: redis://redis:6379/0
+      CRYPTO_MARKET_DATA_SOURCE: simulated
+      # Use CRYPTO_MARKET_DATA_SOURCE=live to stream public Coinbase ticker data.
+      CRYPTO_STREAM_INTERVAL_SECONDS: 1
+      CRYPTO_SMS_DRY_RUN: "true"
+      # Set these and CRYPTO_SMS_DRY_RUN=false to send real SMS messages.
+      # CRYPTO_TWILIO_ACCOUNT_SID: your_account_sid
+      # CRYPTO_TWILIO_AUTH_TOKEN: your_auth_token
+      # CRYPTO_TWILIO_FROM_NUMBER: "+15551234567"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+      VITE_WS_BASE_URL: ws://localhost:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
